@@ -24,6 +24,9 @@ class CacaPalavras:
         self.palavras = []
         self.selecao = []  # lista de (linha, coluna)
         self.arrastando = False
+        self.palavras_encontradas = set()
+        self.celulas_fixadas = set()
+
 
             
     def montarJogo(self):
@@ -58,10 +61,13 @@ class CacaPalavras:
                 y = OFFSET_Y + linha * CELULA_QUADRADO
 
                 # cor da célula
-                if (linha, coluna) in self.selecao:
-                    cor = (180, 220, 255)  # azul (selecionada)
+                if (linha, coluna) in self.celulas_fixadas:
+                    cor = (160, 200, 160)  # verde (encontrada)
+                elif (linha, coluna) in self.selecao:
+                    cor = (180, 220, 255)  # azul (seleção atual)
                 else:
                     cor = (245, 245, 245)  # branca
+
                     
                     
                 #desenhar o quadrado
@@ -107,8 +113,26 @@ class CacaPalavras:
         tela.blit(titulo, (x, y - 40))
 
         for i, palavra in enumerate(banco_de_palavras):
-            texto = fonte.render(palavra, True, (60, 60, 60))
-            tela.blit(texto, (x, y + i * espacamento))
+            if palavra in self.palavras_encontradas:
+                texto = fonte.render(palavra, True, (120, 120, 120))
+                tela.blit(texto, (x, y + i * espacamento))
+
+                # risco
+                largura = texto.get_width()
+                altura = texto.get_height()
+                y_risco = y + i * espacamento + altura // 2
+
+                pygame.draw.line(
+                    tela,
+                    (120, 120, 120),
+                    (x, y_risco),
+                    (x + largura, y_risco),
+                    2
+                )
+            else:
+                texto = fonte.render(palavra, True, (60, 60, 60))
+                tela.blit(texto, (x, y + i * espacamento))
+
 
     def mouse_para_celula(self, pos):
         OFFSET_X = 40
@@ -139,6 +163,33 @@ class CacaPalavras:
 
         elif evento.type == pygame.MOUSEBUTTONUP:
             self.arrastando = False
+
+            palavra, palavra_invertida = self.obter_palavra_selecionada()
+
+            if palavra in banco_de_palavras:
+                self.palavras_encontradas.add(palavra)
+                self.celulas_fixadas.update(self.selecao)
+
+            elif palavra_invertida in banco_de_palavras:
+                self.palavras_encontradas.add(palavra_invertida)
+                self.celulas_fixadas.update(self.selecao)
+
+            self.selecao = []
+
+            
+            
+            
+    def obter_palavra_selecionada(self):
+        letras = []
+
+        for linha, coluna in self.selecao:
+            letras.append(self.palavras[linha][coluna])
+
+        palavra = "".join(letras)
+        palavra_invertida = palavra[::-1]
+
+        return palavra, palavra_invertida
+
 
         # #mostrar os números das colunas 
         # linha_palavra = palavras[0] #primeira linha
