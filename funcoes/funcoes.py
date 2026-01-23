@@ -26,29 +26,81 @@ class CacaPalavras:
         self.arrastando = False
         self.palavras_encontradas = set()
         self.celulas_fixadas = set()
+        self.palavras_no_jogo = []
+        self.matriz = [["" for _ in range(self.colunas)] for _ in range(self.linhas)] 
 
+            
+    # def montarJogo(self):
+    #     self.palavras = []  # limpa antes de montar
 
+    #     for _ in range(self.linhas):
+    #         #escolhendo a palavra
+    #         palavra_escolhida = random.choice(banco_de_palavras)
+            
+    #         #criando uma lista com 10 letras aleatórias
+    #         aleatorio = random.choices(string.ascii_uppercase, k=self.colunas)#passando a biblioteca string e a tabela de letras maiúsculas, k= limite de caracteres
+
+    #         #Sorteando onde a palavra vai começar
+    #         sobra_espaco = self.colunas - len(palavra_escolhida)
+    #         posicao_inicio = random.randint(0, sobra_espaco)
+
+    #         #colocando a palavra dentro da linha de letras aleatórias
+    #         for index in range(len(palavra_escolhida)):
+    #             # substitui a letra aleatória pela a letra da palavra
+    #             aleatorio[posicao_inicio + index] = palavra_escolhida[index]
+
+    #         self.palavras.append(aleatorio)
             
     def montarJogo(self):
-        self.palavras = []  # limpa antes de montar
+        self.matriz = [["" for _ in range(self.colunas)] for _ in range(self.linhas)]
+        self.palavras_no_jogo = []
 
-        for _ in range(self.linhas):
-            #escolhendo a palavra
-            palavra_escolhida = random.choice(banco_de_palavras)
-            
-            #criando uma lista com 10 letras aleatórias
-            aleatorio = random.choices(string.ascii_uppercase, k=self.colunas)#passando a biblioteca string e a tabela de letras maiúsculas, k= limite de caracteres
+        for palavra in banco_de_palavras:
+            if self.tentar_inserir_palavra(palavra):
+                self.palavras_no_jogo.append(palavra)
 
-            #Sorteando onde a palavra vai começar
-            sobra_espaco = self.colunas - len(palavra_escolhida)
-            posicao_inicio = random.randint(0, sobra_espaco)
+        self.preencher_com_letras()
 
-            #colocando a palavra dentro da linha de letras aleatórias
-            for index in range(len(palavra_escolhida)):
-                # substitui a letra aleatória pela a letra da palavra
-                aleatorio[posicao_inicio + index] = palavra_escolhida[index]
+        # matriz vira palavras (pra não quebrar o resto do código)
+        self.palavras = self.matriz
 
-            self.palavras.append(aleatorio)
+    def tentar_inserir_palavra(self, palavra):
+        direcao = random.choice(["H", "V"])
+        tamanho = len(palavra)
+
+        if direcao == "H":
+            linha = random.randint(0, self.linhas - 1)
+            coluna = random.randint(0, self.colunas - tamanho)
+
+            for i in range(tamanho):
+                letra = self.matriz[linha][coluna + i]
+                if letra != "" and letra != palavra[i]:
+                    return False
+
+            for i in range(tamanho):
+                self.matriz[linha][coluna + i] = palavra[i]
+
+            return True
+
+        else:  # VERTICAL
+            linha = random.randint(0, self.linhas - tamanho)
+            coluna = random.randint(0, self.colunas - 1)
+
+            for i in range(tamanho):
+                letra = self.matriz[linha + i][coluna]
+                if letra != "" and letra != palavra[i]:
+                    return False
+
+            for i in range(tamanho):
+                self.matriz[linha + i][coluna] = palavra[i]
+
+            return True
+
+    def preencher_com_letras(self):
+        for i in range(self.linhas):
+            for j in range(self.colunas):
+                if self.matriz[i][j] == "":
+                    self.matriz[i][j] = random.choice(string.ascii_uppercase)
 
     
     def mostrarJogo(self,tela):
@@ -112,7 +164,7 @@ class CacaPalavras:
         titulo = fonte.render("Palavras para encontrar", True, (40, 40, 40))
         tela.blit(titulo, (x, y - 40))
 
-        for i, palavra in enumerate(banco_de_palavras):
+        for i, palavra in enumerate(self.palavras_no_jogo):
             if palavra in self.palavras_encontradas:
                 texto = fonte.render(palavra, True, (120, 120, 120))
                 tela.blit(texto, (x, y + i * espacamento))
@@ -175,8 +227,6 @@ class CacaPalavras:
                 self.celulas_fixadas.update(self.selecao)
 
             self.selecao = []
-
-            
             
             
     def obter_palavra_selecionada(self):
